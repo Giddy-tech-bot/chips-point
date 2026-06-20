@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickBite | Food Ordering System</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-color: #10b981;
+            --accent-hover: #059669;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        /* Desktop Layout Improvement */
+        @media (min-width: 992px) {
+            .container {
+                grid-template-columns: 2.5fr 1fr;
+            }
+        }
+
+        header {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        /* Menu Grid */
+        .menu-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-left: 10px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        /* Food Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+        }
+
+        .card-info {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .price-select-container {
+            margin: 10px 0;
+        }
+
+        .size-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .price-select {
+            width: 100%;
+            padding: 8px;
+            background: #334155;
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .card-price {
+            font-weight: 600;
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            margin: 10px 0;
+        }
+
+        .btn-add {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Sidebar Cart */
+        .cart-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            backdrop-filter: blur(12px);
+        }
+
+        .cart-title {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 10px;
+        }
+
+        .cart-count {
+            background: var(--accent-color);
+            color: white;
+            font-size: 0.9rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .cart-items {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+        }
+
+        .cart-item-details div {
+            font-weight: 500;
+        }
+
+        .cart-item-details span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .btn-remove {
+            background: transparent;
+            color: #ef4444;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            padding: 5px;
+        }
+
+        .cart-summary {
+            border-top: 1px solid var(--glass-border);
+            padding-top: 15px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .btn-checkout {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-checkout:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Café FastFood</h1>
+            <p>Fresh & Delicious Meals Delivered Quick</p>
+        </header>
+
+        <!-- Main Menu Side -->
+        <main class="menu-sections">
+            
+            <!-- Snacks & Meals -->
+            <section>
+                <h2 class="section-title">Bites & Meals</h2>
+                <div class="grid">
+                    
+                    <!-- Chapo -->
+                    <div class="card">
+                        <img src="images.ke/Pumpkin chapatis.jfif" alt="Chapati" class="card-img">
+                        <div class="card-info">
+                            <h3 class="card-title">Chapati</h3>
+                            <div class="card-price">Ksh 20</div>
+                            <button class="btn-add" onclick="addToCart('Chapati', 20)">Add to Order</button>
+                        </div>
+                    </div>
+
+                    <!-- Samosa Beef -->
+                    <div class="card">
+                       <img src="images.ke/samosa beef.jfif" alt="Samosa (Beef)" class="card-img">
+                        <div class="card-info">
+                            <h3 class="card-title">Samosa (Beef)</h3>
+                            <div class="card-price">Ksh 30</div>
+                            <button class="btn-add" onclick="addToCart('Samosa (Beef)', 30)">Add to Order</button>
+                        </div>
+                    </div>
+
+                    <!-- Samosa Ndengu -->
+                    <div class="card">
+                        <img src="images.ke/samosa dengu.jfif" alt="Ndengu Samosa" class="card-img">
+                        <div class="card-info">
+                            <h3 class="card-title">Samosa (Ndengu)</h3>
+                            <div class="card-price">Ksh 20</div>
+                            <button class="btn-add" onclick="addToCart('Samosa (Ndengu)', 20)">Add to Order</button>
+                        </div>
+                    </div>
+
+                    <!-- Smokie -->
+                    <div class="card">
+                       <img src="images.ke/smokie.jfif" alt="Smokie" class="card-img">
+                        <div class="card-info">
+                            <h3 class="card-title">Smokie</h3>
+                            <div class="card-price">Ksh 30</div>
+                            <button class="btn-add" onclick="addToCart('Smokie', 30)">Add to Order</button>
+                        </div>
+                    </div>
+
+                    <!-- Chips (Dynamic Price) -->
+                    <div class="card">
+                        <img src="images.ke/chipos - Copy.jfif" alt="Chips" class="card-img">
+                        <div class="card-info">
+                            <h3 class="card-title">French Fries (Chips)</h3>
+                            <div class="price-select-container">
+                                <span class="size-label">Select Portion:</span>
+                                <select id="chips-price" class="price-select">
+                                    <option value="50">Small - Ksh 50</option>
+                                    <option value="70">Medium - Ksh 70</option>
+                                    <option value="100">Large - Ksh 100</option>
+                                </select>
+                            </div>
+                            <button class="btn-add" onclick="addDynamicItem('Chips', 'chips-price')">Add to Order</button>
+                        </div>
+                    </div>
+
+                    <!-- Bhajia (Dynamic Price) -->
+                    <div class="card">
+                        <img src="images.ke/bhajia.jfif" alt="Bhajia" class="card-img">
+                        <div class="card-info">
+                            <h3 class="card-title">Bhajia</h3>
+                            <div class="price-select-container">
+                                <span class="size-label">Select Portion:</span>
+                                <select id="bhajia-price" class="price-select">
+                                    <option value="70">Medium - Ksh 70</option>
+                                    <option value="100">Large - Ksh 100</option>
+                                </select>
+                            </div>
+                            <button class="btn-add" onclick="addDynamicItem('Bhajia', 'bhajia-price')">Add to Order</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Drinks & Sodas -->
+            <section>
+                <h2 class="section-title">Chilled Drinks</h2>
+                <div class="grid">
+                    
+                    <!-- Soda Brand Selection -->
+                    <div class="card">
+                        <img src="images.ke/soda.jfif" alt="Sodas" class="card-img">
+                        <div class="card-info">
+                            <h3 class="card-title">Soda (350ml / 500ml)</h3>
+                            <div class="price-select-container">
+                                <span class="size-label">Choose Brand & Size:</span>
+                                <select id="soda-brand" class="price-select">
+                                    <option value="Coca-Cola (350ml)-50">Coca-Cola (350ml) - Ksh 50</option>
+                                    <option value="Coca-Cola (500ml)-70">Coca-Cola (500ml) - Ksh 70</option>
+                                    <option value="Fanta Orange (500ml)-70">Fanta Orange (500ml) - Ksh 70</option>
+                                    <option value="Fanta Blackcurrant (500ml)-70">Fanta Blackcurrant (500ml) - Ksh 70</option>
+                                    <option value="Sprite (500ml)-70">Sprite (500ml) - Ksh 70</option>
+                                    <option value="Stoney (500ml)-70">Stoney (500ml) - Ksh 70</option>
+                                </select>
+                            </div>
+                            <button class="btn-add" onclick="addSodaItem()">Add to Order</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+
+        <!-- Dynamic Checkout Sidebar -->
+        <aside class="cart-panel">
+          <div class="cart-title">
+        <h2>Your Order</h2>
+        <span class="cart-count" id="cart-count">0</span>
+          </div>
+    
+         <div class="cart-items" id="cart-items">
+        <p style="color: var(--text-muted); text-align: center; padding: 20px 0;">Your basket is empty</p>
+         </div>
+
+         <div style="margin-bottom: 15px;">
+        <label for="phone-number" style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">M-Pesa Phone Number:</label>
+        <input type="tel" id="phone-number" placeholder="e.g., 0712345678" style="width: 100%; padding: 10px; background: #334155; color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 8px; outline: none;">
+         </div>
+
+         <div class="cart-summary">
+        <div class="total-row">
+            <span>Total:</span>
+            <span id="cart-total" style="color: var(--accent-color);">Ksh 0</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn-checkout" onclick="checkout('Pay on Delivery')">Place Order (Pay on Delivery)</button>
+            <button class="btn-checkout" onclick="initiatePayment()" style="background: #10b981;">Pay Now via M-Pesa</button>
+        </div>
+    </div>
+</aside>
+    </div>
+
+    <script>
+        let cart = [];
+
+        // Add standard item
+        function addToCart(name, price) {
+            // Check if item already exists in the cart to increment quantity
+            const existingItem = cart.find(item => item.name === name && item.price === price);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ name, price, quantity: 1 });
+            }
+            updateCartUI();
+        }
+
+        // Add item with variable sizes (Chips / Bhajia)
+        function addDynamicItem(baseName, selectId) {
+            const selectEl = document.getElementById(selectId);
+            const price = parseInt(selectEl.value);
+            const sizeLabel = selectEl.options[selectEl.selectedIndex].text.split(' - ')[0];
+            const fullItemName = `${baseName} (${sizeLabel})`;
+            
+            addToCart(fullItemName, price);
+        }
+
+        // Add soda specific item setup
+        function addSodaItem() {
+            const selectEl = document.getElementById('soda-brand');
+            const valueSplit = selectEl.value.split('-');
+            const name = valueSplit[0];
+            const price = parseInt(valueSplit[1]);
+            
+            addToCart(name, price);
+        }
+
+        // Remove an item entirely from basket
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        // Refresh Cart Sidebar Interface
+        function updateCartUI() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartCountEl = document.getElementById('cart-count');
+            const cartTotalEl = document.getElementById('cart-total');
+            
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px 0;">Your basket is empty</p>`;
+                cartCountEl.innerText = '0';
+                cartTotalEl.innerText = 'Ksh 0';
+                return;
+            }
+
+            let total = 0;
+            let count = 0;
+            cartItemsContainer.innerHTML = '';
+
+            cart.forEach((item, index) => {
+                total += (item.price * item.quantity);
+                count += item.quantity;
+
+                const itemRow = document.createElement('div');
+                itemRow.className = 'cart-item';
+                itemRow.innerHTML = `
+                    <div class="cart-item-details">
+                        <div>${item.name}</div>
+                        <span>Ksh ${item.price} x ${item.quantity}</span>
+                    </div>
+                    <button class="btn-remove" onclick="removeFromCart(${index})">Remove</button>
+                `;
+                cartItemsContainer.appendChild(itemRow);
+            });
+
+            cartCountEl.innerText = count;
+            cartTotalEl.innerText = `Ksh ${total}`;
+        }
+
+        // Handle submission
+    // Handle submission to the backend
+async function checkout() {
+    if (cart.length === 0) {
+        alert("Your basket is empty! Add some delicious treats first.");
+        return;
+    }
+
+    // Calculate total on the frontend for verification
+    let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    // Prepare the payload data to send to the backend
+    const orderPayload = {
+        items: cart,
+        totalAmount: total,
+        timestamp: new Date().toISOString()
+    };
+
+    try {
+        // Send a POST request to your backend server
+        const response = await fetch('http://localhost:5000/api/orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderPayload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`Asante! Your order has been placed successfully.\nOrder ID: ${result.orderId}`);
+            cart = []; // Clear the cart
+            updateCartUI();
+        } else {
+            alert(`Order failed: ${result.message}`);
+        }
+    } catch (error) {
+        console.error('Error sending order:', error);
+        alert('Could not connect to the server. Please check if the backend is running.');
+    }
+}
+async function initiatePayment() {
+    if (cart.length === 0) {
+        alert("Your basket is empty!");
+        return;
+    }
+
+    const phoneInput = document.getElementById('phone-number').value.trim();
+    if (!phoneInput || phoneInput.length < 10) {
+        alert("Please enter a valid M-Pesa phone number to proceed.");
+        return;
+    }
+
+    let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    const paymentPayload = {
+        phoneNumber: phoneInput,
+        amount: total,
+        items: cart
+    };
+
+    try {
+        const response = await fetch('http://localhost:5000/api/pay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paymentPayload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(`STK Push sent successfully to ${phoneInput}!\nPlease enter your PIN on your handset to complete the payment of Ksh ${total}.\n\nReceipt Reference: ${result.checkoutRequestId}`);
+            cart = []; // Reset cart upon processing
+            updateCartUI();
+            document.getElementById('phone-number').value = '';
+        } else {
+            alert(`Payment Initialization Failed: ${result.message}`);
+        }
+    } catch (error) {
+        console.error('Payment connection error:', error);
+        alert('Could not connect to the payment gateway. Is your backend server running?');
+    }
+}
+    </script>
+</body>
+</html>

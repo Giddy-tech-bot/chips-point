@@ -1,0 +1,227 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin - Orders</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#0f172a;color:#f8fafc;padding:20px}
+    .container{max-width:1200px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:20px}
+    h1{margin:0}
+    .btn-logout{background:#ef4444;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer}
+    .controls{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+    input[type="text"]{padding:8px 12px;background:#334155;color:#f8fafc;border:1px solid rgba(255,255,255,0.06);border-radius:4px;flex:1;min-width:200px}
+    select{padding:8px 12px;background:#334155;color:#f8fafc;border:1px solid rgba(255,255,255,0.06);border-radius:4px}
+    .btn-export{background:#3b82f6;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer}
+    .card{background:rgba(30,41,59,0.7);border:1px solid rgba(255,255,255,0.06);padding:15px;border-radius:8px;margin-bottom:12px}
+    .row{display:flex;justify-content:space-between;align-items:center}
+    .orderId{font-weight:bold;color:#10b981}
+    .status{padding:4px 8px;border-radius:4px;font-size:0.85rem}
+    .status.pending{background:#ef4444;color:#fff}
+    .status.completed{background:#10b981;color:#fff}
+    button{padding:8px 10px;border-radius:6px;border:none;cursor:pointer}
+    .btn-complete{background:#10b981;color:#fff}
+    .btn-details{background:#3b82f6;color:#fff;margin-left:8px}
+    .btn-delete{background:#ef4444;color:#fff;margin-left:8px}
+    pre{white-space:pre-wrap;margin:8px 0;font-size:0.85rem;color:#94a3b8}
+
+    /* Modal */
+    .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;justify-content:center;align-items:center}
+    .modal.show{display:flex}
+    .modal-content{background:#1e293b;border:1px solid rgba(255,255,255,0.06);padding:30px;border-radius:8px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .modal-header h2{margin:0}
+    .close-btn{background:transparent;color:#ef4444;border:none;font-size:1.5rem;cursor:pointer;padding:0}
+    .modal-body{margin-bottom:20px}
+    .modal-item{margin-bottom:15px;padding:10px;background:rgba(0,0,0,0.3);border-radius:4px}
+    .modal-actions{display:flex;gap:10px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Admin — Orders</h1>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="searchBox" placeholder="Search by Order ID..." />
+      <select id="statusFilter">
+        <option value="">All Statuses</option>
+        <option value="pending">Pending</option>
+        <option value="completed">Completed</option>
+      </select>
+      <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+    </div>
+
+    <div id="orders"></div>
+  </div>
+
+  <!-- Modal for order details -->
+  <div id="detailsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalOrderId"></h2>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions">
+        <button class="btn-complete" id="modalCompleteBtn" onclick="completeFromModal()">Mark Completed</button>
+        <button class="btn-delete" id="modalDeleteBtn" onclick="deleteFromModal()">Delete</button>
+        <button style="background:#666;color:#fff" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allOrders = [];
+    let currentModalOrder = null;
+
+    // Check auth
+    function checkAuth(){
+      if(!localStorage.getItem('adminToken')){
+        window.location.href = '/admin-login.html';
+      }
+    }
+
+    function getToken(){
+      return localStorage.getItem('adminToken');
+    }
+
+    async function fetchOrders(){
+      try{
+        const res = await fetch('/api/orders', {
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        if(res.status === 401){ logout(); return }
+        const json = await res.json();
+        if(!json.success){ document.getElementById('orders').innerText = 'Failed to load orders'; return }
+        allOrders = json.orders || [];
+        render(allOrders);
+      }catch(err){
+        document.getElementById('orders').innerText = 'Connection error';
+      }
+    }
+
+    function getFiltered(){
+      const search = document.getElementById('searchBox').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+      return allOrders.filter(o => {
+        const matchSearch = o.orderId.toLowerCase().includes(search);
+        const matchStatus = !statusFilter || (o.status === statusFilter);
+        return matchSearch && matchStatus;
+      });
+    }
+
+    function render(orders){
+      const container = document.getElementById('orders');
+      container.innerHTML = '';
+      if(orders.length===0){ container.innerHTML = '<p>No orders found.</p>'; return }
+      orders.reverse().forEach(o=>{
+        const el = document.createElement('div'); el.className='card';
+        const statusClass = (o.status==='completed'?'completed':'pending');
+        el.innerHTML = `<div class="row" style="margin-bottom:10px"><div><span class="orderId">${o.orderId}</span><span class="status ${statusClass}">${o.status||'pending'}</span></div><div>Total: <strong>Ksh ${o.totalAmount}</strong></div></div>
+          <div style="margin-top:8px"><button class="btn-details">View Details</button><button class="btn-complete">Mark Completed</button><button class="btn-delete">Delete</button></div>`;
+        const detailsBtn = el.querySelector('.btn-details');
+        const completeBtn = el.querySelector('.btn-complete');
+        const delBtn = el.querySelector('.btn-delete');
+        detailsBtn.onclick = ()=>openModal(o);
+        completeBtn.onclick = async ()=>{
+          await updateOrder(o.orderId, {status:'completed'});
+          fetchOrders();
+        };
+        delBtn.onclick = async ()=>{
+          if(!confirm('Delete order '+o.orderId+'?')) return;
+          await deleteOrder(o.orderId);
+          fetchOrders();
+        };
+        container.appendChild(el);
+      })
+    }
+
+    function openModal(order){
+      currentModalOrder = order;
+      document.getElementById('modalOrderId').innerText = order.orderId;
+      let html = `<p><strong>Status:</strong> <span class="status ${order.status==='completed'?'completed':'pending'}">${order.status||'pending'}</span></p>
+        <p><strong>Total:</strong> Ksh ${order.totalAmount}</p>
+        <p><strong>Timestamp:</strong> ${order.timestamp}</p>
+        <p><strong>Items:</strong></p>`;
+      (order.items||[]).forEach(item=>{
+        html += `<div class="modal-item">${item.name} × ${item.quantity} — Ksh ${item.price}</div>`;
+      });
+      document.getElementById('modalBody').innerHTML = html;
+      document.getElementById('detailsModal').classList.add('show');
+    }
+
+    function closeModal(){
+      document.getElementById('detailsModal').classList.remove('show');
+      currentModalOrder = null;
+    }
+
+    async function completeFromModal(){
+      await updateOrder(currentModalOrder.orderId, {status:'completed'});
+      closeModal();
+      fetchOrders();
+    }
+
+    async function deleteFromModal(){
+      if(!confirm('Delete order '+currentModalOrder.orderId+'?')) return;
+      await deleteOrder(currentModalOrder.orderId);
+      closeModal();
+      fetchOrders();
+    }
+
+    async function updateOrder(orderId, updates){
+      try{
+        const res = await fetch(`/api/orders/${orderId}`, {
+          method:'PUT',
+          headers:{'Content-Type':'application/json','Authorization':`Bearer ${getToken()}`},
+          body:JSON.stringify(updates)
+        });
+        if(res.status===401) logout();
+      }catch(err){}
+    }
+
+    async function deleteOrder(orderId){
+      try{
+        const res = await fetch(`/api/orders/${orderId}`, {
+          method:'DELETE',
+          headers:{'Authorization':`Bearer ${getToken()}`}
+        });
+        if(res.status===401) logout();
+      }catch(err){}
+    }
+
+    function exportCSV(){
+      const filtered = getFiltered();
+      let csv = 'Order ID,Status,Total,Items,Timestamp\n';
+      filtered.forEach(o=>{
+        const items = (o.items||[]).map(i=>`${i.name}(${i.quantity})`).join(';');
+        csv += `"${o.orderId}","${o.status||'pending'}","${o.totalAmount}","${items}","${o.timestamp}"\n`;
+      });
+      const blob = new Blob([csv], {type:'text/csv'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'orders_' + new Date().toISOString().split('T')[0] + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function logout(){
+      localStorage.removeItem('adminToken');
+      window.location.href = '/admin-login.html';
+    }
+
+    // Event listeners
+    document.getElementById('searchBox').addEventListener('input', ()=>render(getFiltered()));
+    document.getElementById('statusFilter').addEventListener('change', ()=>render(getFiltered()));
+
+    // Init
+    checkAuth();
+    fetchOrders();
+    setInterval(fetchOrders, 5000);
+  </script>
+</body>
+</html>
