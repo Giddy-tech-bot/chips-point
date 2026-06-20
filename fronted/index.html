@@ -390,6 +390,11 @@
          </div>
 
          <div style="margin-bottom: 15px;">
+        <label for="delivery-location" style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Delivery Location:</label>
+        <input type="text" id="delivery-location" placeholder="e.g., 123 Main St, Nairobi" style="width: 100%; padding: 10px; background: #334155; color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 8px; outline: none; margin-bottom: 10px;">
+         </div>
+
+         <div style="margin-bottom: 15px;">
         <label for="phone-number" style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">M-Pesa Phone Number:</label>
         <input type="tel" id="phone-number" placeholder="e.g., 0712345678" style="width: 100%; padding: 10px; background: #334155; color: var(--text-main); border: 1px solid var(--glass-border); border-radius: 8px; outline: none;">
          </div>
@@ -493,6 +498,12 @@ async function checkout() {
         return;
     }
 
+    const deliveryLocation = document.getElementById('delivery-location').value.trim();
+    if (!deliveryLocation) {
+        alert("Please enter a delivery location.");
+        return;
+    }
+
     // Calculate total on the frontend for verification
     let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -500,6 +511,7 @@ async function checkout() {
     const orderPayload = {
         items: cart,
         totalAmount: total,
+        deliveryLocation: deliveryLocation,
         timestamp: new Date().toISOString()
     };
 
@@ -519,6 +531,7 @@ async function checkout() {
             alert(`Asante! Your order has been placed successfully.\nOrder ID: ${result.orderId}`);
             cart = []; // Clear the cart
             updateCartUI();
+            document.getElementById('delivery-location').value = '';
         } else {
             alert(`Order failed: ${result.message}`);
         }
@@ -534,8 +547,15 @@ async function initiatePayment() {
     }
 
     const phoneInput = document.getElementById('phone-number').value.trim();
+    const deliveryLocation = document.getElementById('delivery-location').value.trim();
+    
     if (!phoneInput || phoneInput.length < 10) {
         alert("Please enter a valid M-Pesa phone number to proceed.");
+        return;
+    }
+
+    if (!deliveryLocation) {
+        alert("Please enter a delivery location.");
         return;
     }
 
@@ -544,6 +564,7 @@ async function initiatePayment() {
     const paymentPayload = {
         phoneNumber: phoneInput,
         amount: total,
+        deliveryLocation: deliveryLocation,
         items: cart
     };
 
@@ -561,6 +582,7 @@ async function initiatePayment() {
             cart = []; // Reset cart upon processing
             updateCartUI();
             document.getElementById('phone-number').value = '';
+            document.getElementById('delivery-location').value = '';
         } else {
             alert(`Payment Initialization Failed: ${result.message}`);
         }

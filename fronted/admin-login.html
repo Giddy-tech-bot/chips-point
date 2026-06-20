@@ -31,25 +31,31 @@
       e.preventDefault();
       const password = document.getElementById('password').value;
       try{
+        console.log('Attempting login...');
         const res = await fetch('/api/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password })
         });
+        console.log('Login response status:', res.status);
         const json = await res.json();
+        console.log('Login response:', json);
         if(!json.success){
           document.getElementById('error').innerText = json.message || 'Login failed';
           return;
         }
         localStorage.setItem('adminToken', json.token);
+        console.log('Token saved, redirecting to admin...');
         window.location.href = '/admin.html';
       }catch(err){
-        document.getElementById('error').innerText = 'Connection error';
+        console.error('Login error:', err);
+        document.getElementById('error').innerText = 'Connection error: ' + err.message;
       }
     }
 
     // If already logged in, redirect to admin
     if(localStorage.getItem('adminToken')){
+      console.log('Token found, redirecting to admin...');
       window.location.href = '/admin.html';
     }
   </script>

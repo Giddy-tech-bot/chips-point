@@ -43,14 +43,18 @@ app.post('/api/admin/login', (req, res) => {
 
 // 1. Standard Checkout Endpoint
 app.post('/api/orders', (req, res) => {
-    const { items, totalAmount, timestamp } = req.body;
+    const { items, totalAmount, timestamp, deliveryLocation } = req.body;
 
     if (!items || items.length === 0) {
         return res.status(400).json({ success: false, message: 'Cart is empty' });
     }
 
+    if (!deliveryLocation) {
+        return res.status(400).json({ success: false, message: 'Delivery location is required' });
+    }
+
     const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-    const newOrder = { orderId, items, totalAmount, timestamp, status: 'pending' };
+    const newOrder = { orderId, items, totalAmount, timestamp, deliveryLocation, status: 'pending' };
 
     let existingOrders = [];
     if (fs.existsSync(ORDERS_FILE)) {
@@ -119,10 +123,14 @@ app.delete('/api/orders/:orderId', verifyAdminToken, (req, res) => {
 
 // 2. M-Pesa Payment Endpoint
 app.post('/api/pay', (req, res) => {
-    const { phoneNumber, amount, items } = req.body;
+    const { phoneNumber, amount, items, deliveryLocation } = req.body;
 
     if (!phoneNumber || !amount || !items) {
         return res.status(400).json({ success: false, message: 'Missing payment parameters' });
+    }
+
+    if (!deliveryLocation) {
+        return res.status(400).json({ success: false, message: 'Delivery location is required' });
     }
 
     let formattedPhone = phoneNumber;
@@ -136,6 +144,7 @@ app.post('/api/pay', (req, res) => {
     console.log(`[STK PUSH TRIGGERED]`);
     console.log(`Sending Prompt to: +${formattedPhone}`);
     console.log(`Amount: Ksh ${amount}`);
+    console.log(`Delivery Location: ${deliveryLocation}`);
     console.log(`======================================\n`);
 
     res.status(200).json({

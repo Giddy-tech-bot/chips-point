@@ -145,6 +145,7 @@
       document.getElementById('modalOrderId').innerText = order.orderId;
       let html = `<p><strong>Status:</strong> <span class="status ${order.status==='completed'?'completed':'pending'}">${order.status||'pending'}</span></p>
         <p><strong>Total:</strong> Ksh ${order.totalAmount}</p>
+        <p><strong>Delivery Location:</strong> ${order.deliveryLocation || 'N/A'}</p>
         <p><strong>Timestamp:</strong> ${order.timestamp}</p>
         <p><strong>Items:</strong></p>`;
       (order.items||[]).forEach(item=>{
@@ -195,10 +196,10 @@
 
     function exportCSV(){
       const filtered = getFiltered();
-      let csv = 'Order ID,Status,Total,Items,Timestamp\n';
+      let csv = 'Order ID,Status,Total,Delivery Location,Items,Timestamp\n';
       filtered.forEach(o=>{
         const items = (o.items||[]).map(i=>`${i.name}(${i.quantity})`).join(';');
-        csv += `"${o.orderId}","${o.status||'pending'}","${o.totalAmount}","${items}","${o.timestamp}"\n`;
+        csv += `"${o.orderId}","${o.status||'pending'}","${o.totalAmount}","${o.deliveryLocation||'N/A'}","${items}","${o.timestamp}"\n`;
       });
       const blob = new Blob([csv], {type:'text/csv'});
       const url = URL.createObjectURL(blob);
@@ -214,12 +215,17 @@
       window.location.href = '/admin-login.html';
     }
 
-    // Event listeners
-    document.getElementById('searchBox').addEventListener('input', ()=>render(getFiltered()));
-    document.getElementById('statusFilter').addEventListener('change', ()=>render(getFiltered()));
-
-    // Init
+    // Init - CHECK AUTH FIRST before attaching event listeners
+    console.log('Admin panel initializing...');
     checkAuth();
+    console.log('Auth check passed, setting up UI...');
+    
+    // Event listeners (safe to attach now that auth is confirmed)
+    const searchBox = document.getElementById('searchBox');
+    const statusFilter = document.getElementById('statusFilter');
+    if(searchBox) searchBox.addEventListener('input', ()=>render(getFiltered()));
+    if(statusFilter) statusFilter.addEventListener('change', ()=>render(getFiltered()));
+    
     fetchOrders();
     setInterval(fetchOrders, 5000);
   </script>
