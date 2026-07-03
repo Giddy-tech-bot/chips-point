@@ -29,13 +29,12 @@ const DARAJA_URLs = {
 
 const BASE_URL = DARAJA_CONFIG.isProduction ? DARAJA_URLs.production : DARAJA_URLs.sandbox;
 
-// Serve the frontend static files
-const FRONTEND_DIR_CANDIDATES = [
-  path.join(__dirname, '..', 'frontend'),
-  path.join(__dirname, '..', 'fronted')
-];
-const FRONTEND_DIR = FRONTEND_DIR_CANDIDATES.find(dir => fs.existsSync(dir)) || FRONTEND_DIR_CANDIDATES[0];
-app.use(express.static(FRONTEND_DIR));
+app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Cafe FastFood API is running'
+    });
+});
 
 // Security & middleware
 const helmet = require('helmet');
@@ -533,7 +532,3 @@ app.post('/api/payment-callback', (req, res) => {
     }
 });
 
-// Serve index.html for the root path
-app.get('/', (req, res) => {
-    res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
-});
