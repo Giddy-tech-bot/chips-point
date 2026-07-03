@@ -27,18 +27,24 @@
   </div>
 
   <script>
+    function getApiBaseUrl(){
+      return window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://chips-point-backend.onrender.com';
+    }
+
     async function handleLogin(e){
       e.preventDefault();
       const password = document.getElementById('password').value;
       try{
         console.log('Attempting login...');
-        const res = await fetch('/api/admin/login', {
+        const res = await fetch(`${getApiBaseUrl()}/api/admin/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password })
         });
+        const text = await res.text();
+        let json = {};
+        try { json = JSON.parse(text); } catch (err) { json = { success: false, message: text }; }
         console.log('Login response status:', res.status);
-        const json = await res.json();
         console.log('Login response:', json);
         if(!json.success){
           document.getElementById('error').innerText = json.message || 'Login failed';
