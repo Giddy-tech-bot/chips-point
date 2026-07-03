@@ -514,8 +514,12 @@ async function checkoutCash() {
         customerName: 'Cash Customer'
     };
 
+    const apiBaseUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:5000'
+        : 'https://chips-point-backend.onrender.com';
+
     try {
-        const response = await fetch('http://localhost:5000/api/orders/cash', {
+        const response = await fetch(`${apiBaseUrl}/api/orders/cash`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -567,8 +571,12 @@ async function initiatePayment() {
         items: cart
     };
 
+    const apiBaseUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:5000'
+        : 'https://chips-point-backend.onrender.com';
+
     try {
-        const response = await fetch('http://localhost:5000/api/pay', {
+        const response = await fetch(`${apiBaseUrl}/api/pay`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(paymentPayload)

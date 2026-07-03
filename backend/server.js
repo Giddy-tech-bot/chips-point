@@ -43,16 +43,16 @@ const rateLimit = require('express-rate-limit');
 
 app.use(helmet()); // Sets secure HTTP headers
 
-// Tighten CORS in production
-if (process.env.NODE_ENV === 'production') {
-    app.use(cors({
-        origin: process.env.FRONTEND_URL || 'https://yourdomain.com',
-        methods: ['GET', 'POST'],
-        allowedHeaders: ['Content-Type', 'Authorization']
-    }));
-} else {
-    app.use(cors());
-}
+const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
+const allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
+const allowedHeaders = ['Content-Type', 'Authorization'];
+
+app.use(cors({
+    origin: frontendOrigin,
+    methods: allowedMethods,
+    allowedHeaders,
+    credentials: true
+}));
 
 app.use(express.json()); // Parses incoming JSON data
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
