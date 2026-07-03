@@ -405,7 +405,7 @@
             <span id="cart-total" style="color: var(--accent-color);">Ksh 0</span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button class="btn-checkout" onclick="checkout('Pay on Delivery')">Place Order (Pay on Delivery)</button>
+            <button class="btn-checkout" onclick="checkoutCash()">Place Order (Pay Cash on Delivery)</button>
             <button class="btn-checkout" onclick="initiatePayment()" style="background: #10b981;">Pay Now via M-Pesa</button>
         </div>
     </div>
@@ -492,7 +492,7 @@
 
         // Handle submission
     // Handle submission to the backend
-async function checkout() {
+async function checkoutCash() {
     if (cart.length === 0) {
         alert("Your basket is empty! Add some delicious treats first.");
         return;
@@ -504,20 +504,18 @@ async function checkout() {
         return;
     }
 
-    // Calculate total on the frontend for verification
     let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    // Prepare the payload data to send to the backend
     const orderPayload = {
         items: cart,
         totalAmount: total,
         deliveryLocation: deliveryLocation,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        customerName: 'Cash Customer'
     };
 
     try {
-        // Send a POST request to your backend server
-        const response = await fetch('http://localhost:5000/api/orders', {
+        const response = await fetch('http://localhost:5000/api/orders/cash', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -528,18 +526,19 @@ async function checkout() {
         const result = await response.json();
 
         if (response.ok) {
-            alert(`Asante! Your order has been placed successfully.\nOrder ID: ${result.orderId}`);
-            cart = []; // Clear the cart
+            alert(`Asante! Your order has been placed successfully.\nPay Ksh ${total} in cash when the rider arrives.\nOrder ID: ${result.orderId}`);
+            cart = [];
             updateCartUI();
             document.getElementById('delivery-location').value = '';
         } else {
             alert(`Order failed: ${result.message}`);
         }
     } catch (error) {
-        console.error('Error sending order:', error);
+        console.error('Error sending cash order:', error);
         alert('Could not connect to the server. Please check if the backend is running.');
     }
 }
+
 async function initiatePayment() {
     if (cart.length === 0) {
         alert("Your basket is empty!");
